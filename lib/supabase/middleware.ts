@@ -46,18 +46,10 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith(route)
   )
 
-  // If user is not logged in and trying to access protected route, redirect to login
+  // If user is not logged in and trying to access protected route, redirect to home
   if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    url.searchParams.set('redirectTo', request.nextUrl.pathname)
-    return NextResponse.redirect(url)
-  }
-
-  // If user is logged in and trying to access auth pages, redirect to feed
-  if (user && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/signup')) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/feed'
+    url.pathname = '/'
     return NextResponse.redirect(url)
   }
 

@@ -23,6 +23,7 @@ export async function signup(formData: FormData) {
         username,
         full_name: fullName,
       },
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}/auth/callback`,
     },
   })
 
@@ -31,7 +32,7 @@ export async function signup(formData: FormData) {
   }
 
   revalidatePath('/', 'layout')
-  redirect('/feed')
+  redirect('/auth/confirm-email')
 }
 
 /**
@@ -43,13 +44,22 @@ export async function login(formData: FormData) {
   const email = formData.get('email') as string
   const password = formData.get('password') as string
 
-  const { error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password,
   })
 
   if (error) {
+    // Check if it's an email not confirmed error
+    if (error.message.includes('Email not confirmed')) {
+      return { error: 'Please verify your email address before signing in. Check your inbox for the confirmation link.' }
+    }
     return { error: error.message }
+  }
+
+  // Double check email is confirmed
+  if (data.user && !data.user.email_confirmed_at) {
+    return { error: 'Please verify your email address before signing in. Check your inbox for the confirmation link.' }
   }
 
   revalidatePath('/', 'layout')
